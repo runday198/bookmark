@@ -19,6 +19,7 @@ program
 
 program
   .command("remove <name>")
+  .alias("rm")
   .description("Remove a bookmark")
   .action(configManager.removeBookMarks);
 

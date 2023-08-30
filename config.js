@@ -3,6 +3,7 @@ import chalk from "chalk";
 import process from "node:process";
 import fs from "node:fs/promises";
 import { spawn } from "node:child_process";
+import path from "node:path";
 
 const entryConfigName = "bookmarkEntry";
 const bookMarkListName = "bookmarks";
@@ -24,7 +25,7 @@ const configManager = (function Config() {
   // Publics
   // ***
 
-  function addBookMark(name, path) {
+  function addBookMark(name, providedPath) {
     var pathName = process.cwd();
 
     let existingBookMark = getBookMark(name);
@@ -39,8 +40,10 @@ const configManager = (function Config() {
       process.exit();
     }
 
-    if (path) {
+    if (path.isAbsolute(providedPath)) {
       pathName = path;
+    } else {
+      pathName = path.join(pathName, providedPath);
     }
 
     fs.lstat(pathName)
