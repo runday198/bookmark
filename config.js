@@ -2,7 +2,7 @@ import Conf from "conf";
 import chalk from "chalk";
 import process from "node:process";
 import fs from "node:fs/promises";
-import { spawn } from "node:child_process";
+import { exec, spawn } from "node:child_process";
 import path from "node:path";
 
 const entryConfigName = "bookmarkEntry";
@@ -97,8 +97,7 @@ const configManager = (function Config() {
       process.exit();
     }
 
-    // console.log(getBookMarkPath(bookMark));
-    spawn(
+    let cd = spawn(
       "start",
       [
         "powershell.exe",
@@ -106,8 +105,17 @@ const configManager = (function Config() {
         "-Command",
         `Set-Location '${getBookMarkPath(bookMark)}'`,
       ],
-      { shell: true }
+      { detached: true, shell: true }
     );
+
+    cd.on("error", (error) => {
+      console.log(`Error occured ${error}`);
+      cd.kill();
+    });
+
+    // detach the child process from the parent and exit the program
+    cd.unref();
+    process.exit();
   }
 
   // ***
