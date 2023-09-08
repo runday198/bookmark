@@ -6,9 +6,9 @@ import configManager from "./config.js";
 program.name("bookmark | bm");
 
 program
-  .command("add <name> [path]")
+  .command("add <name> <path>")
   .description(
-    "Create a bookmark at a path. If path is not provided, a bookmark will be created in the current directory"
+    "Create a bookmark at a path. The path can be absolute or relative."
   )
   .action(configManager.addBookMark);
 

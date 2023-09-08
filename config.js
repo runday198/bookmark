@@ -1,8 +1,10 @@
+#!/usr/bin/env node
+
 import Conf from "conf";
 import chalk from "chalk";
 import process from "node:process";
 import fs from "node:fs/promises";
-import { exec, spawn } from "node:child_process";
+import { spawnSync, spawn } from "node:child_process";
 import path from "node:path";
 
 const entryConfigName = "bookmarkEntry";
@@ -27,7 +29,6 @@ const configManager = (function Config() {
 
   function addBookMark(name, providedPath) {
     var pathName = process.cwd();
-
     let existingBookMark = getBookMark(name);
     if (existingBookMark) {
       log(
@@ -41,7 +42,7 @@ const configManager = (function Config() {
     }
 
     if (path.isAbsolute(providedPath)) {
-      pathName = path;
+      pathName = providedPath;
     } else {
       pathName = path.join(pathName, providedPath);
     }
@@ -97,25 +98,7 @@ const configManager = (function Config() {
       process.exit();
     }
 
-    let cd = spawn(
-      "start",
-      [
-        "powershell.exe",
-        "-NoExit",
-        "-Command",
-        `Set-Location '${getBookMarkPath(bookMark)}'`,
-      ],
-      { detached: true, shell: true }
-    );
-
-    cd.on("error", (error) => {
-      console.log(`Error occured ${error}`);
-      cd.kill();
-    });
-
-    // detach the child process from the parent and exit the program
-    cd.unref();
-    process.exit();
+    startShellProcess(getBookMarkPath(bookMark));
   }
 
   // ***
@@ -170,6 +153,46 @@ const configManager = (function Config() {
     bookMarkList.push(newBookMark);
     updateBookMarkList(bookMarkList);
     return newBookMark;
+  }
+
+  function startShellProcess(targetLocation) {
+    if (process.platform === "win32") {
+      let cd = spawn(
+        "start",
+        [
+          "powershell.exe",
+          "-NoExit",
+          "-Command",
+          `Set-Location '${targetLocation}'`,
+        ],
+        { detached: true, shell: true }
+      );
+
+      cd.on("error", (error) => {
+        console.log(`Error occured ${error}`);
+        cd.kill();
+      });
+
+      // detach the child process from the parent and exit the program
+      cd.unref();
+      process.exit();
+    } else if (process.platform === "linux") {
+      log(targetLocation);
+      let cd = spawn(
+        "gnome-terminal",
+        ["--", `bash -c "cd '${targetLocation}'; exec bash"`],
+        { detached: true, shell: true }
+      );
+
+      cd.on("error", (error) => {
+        console.log(`Error occured ${error}`);
+        cd.kill();
+      });
+
+      // detach the child process from the parent and exit the program
+      cd.unref();
+      process.exit();
+    }
   }
 
   // FIN (HELPERS)
